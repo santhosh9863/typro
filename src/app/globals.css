@@ -1,0 +1,115 @@
+/* src/app/globals.css */
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+:root {
+    --neumorphic-bg: #e0e5ec;
+    --neumorphic-text: #2d3436;
+    --typro-bg: #e0e5ec;
+    --typro-bg-secondary: #d1d9e6;
+    --typro-text: #2d3436;
+    --typro-text-secondary: #636e72;
+    --typro-accent: #0984e3;
+    --typro-accent-secondary: #74b9ff;
+    --typro-shadow-light: #ffffff;
+    --typro-shadow-dark: #a3b1c6;
+    --typro-key-from: #d1d9e6;
+    --typro-key-to: #f0f4f8;
+    --typro-correct: #00b894;
+    --typro-incorrect: #d63031;
+    --typro-active: #0984e3;
+    --typro-pending: #b2bec3;
+    --typro-border: rgba(255,255,255,0.1);
+    --typro-glow: rgba(9,132,227,0.3);
+}
+
+@layer base {
+    body {
+        background-color: var(--typro-bg);
+        color: var(--typro-text);
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    div,
+    button,
+    span,
+    p {
+        @apply transition-shadow duration-150 ease-in-out;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes rgb-glow {
+    0% { box-shadow: 0 0 8px rgba(255,0,255,0.6), 0 0 16px rgba(0,255,255,0.4); }
+    33% { box-shadow: 0 0 8px rgba(0,255,65,0.6), 0 0 16px rgba(255,0,255,0.4); }
+    66% { box-shadow: 0 0 8px rgba(0,255,255,0.6), 0 0 16px rgba(0,255,65,0.4); }
+    100% { box-shadow: 0 0 8px rgba(255,0,255,0.6), 0 0 16px rgba(0,255,255,0.4); }
+}
+
+@layer utilities {
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .animate-in {
+        animation: fade-in 0.3s ease-out forwards;
+    }
+
+    .animate-spin-slow {
+        animation: spin 0.6s ease-out;
+    }
+
+    .typing-cursor {
+        width: 2px;
+        height: 1.2em;
+        background-color: var(--typro-active);
+        border-radius: 9999px;
+        display: inline-block;
+    }
+
+    .rgb-mode-active {
+        animation: rgb-glow 2s ease-in-out infinite;
+    }
+
+    .predictive-glow {
+        box-shadow: 0 0 6px var(--typro-accent-secondary), 0 0 12px var(--typro-glow);
+    }
+}
+
+[data-theme="onyx"] body {
+    background-color: var(--typro-bg);
+    color: var(--typro-text);
+}
+
+[data-theme="cyberpunk"] body {
+    background-color: var(--typro-bg);
+    color: var(--typro-text);
+}
+
+[data-theme="matcha"] body {
+    background-color: var(--typro-bg);
+    color: var(--typro-text);
+}
