@@ -3,24 +3,31 @@
 @config "../../tailwind.config.js";
 
 :root {
-    --neumorphic-bg: #e0e5ec;
-    --neumorphic-text: #2d3436;
-    --typro-bg: #e0e5ec;
-    --typro-bg-secondary: #d1d9e6;
-    --typro-text: #2d3436;
-    --typro-text-secondary: #636e72;
-    --typro-accent: #0984e3;
-    --typro-accent-secondary: #74b9ff;
-    --typro-shadow-light: #ffffff;
-    --typro-shadow-dark: #a3b1c6;
-    --typro-key-from: #d1d9e6;
-    --typro-key-to: #f0f4f8;
-    --typro-correct: #00b894;
-    --typro-incorrect: #d63031;
-    --typro-active: #0984e3;
-    --typro-pending: #b2bec3;
-    --typro-border: rgba(255,255,255,0.1);
-    --typro-glow: rgba(9,132,227,0.3);
+    /* BASE COLORS - TAN & LIVER */
+    --typro-bg: #CFB882;           /* Tan Base */
+    --typro-bg-secondary: #C1AB75; /* Deeper Tan */
+    --typro-text: #6A3428;         /* Liver Text */
+    --typro-text-secondary: #8B5E54;
+    --typro-accent: #6A3428;       /* Liver Accent */
+    --typro-accent-secondary: #A67C72;
+    
+    /* NEUMORPHIC SHADOWS (Calculated for Tan) */
+    --typro-shadow-light: #E6D09A; /* Brighter Tan */
+    --typro-shadow-dark: #B8A26D;  /* Darker Tan */
+    
+    /* TYPING STATES */
+    --typro-key-from: #DBC491;
+    --typro-key-to: #C1AB75;
+    --typro-correct: #4A773C;      /* Muted Vintage Green */
+    --typro-incorrect: #A63D2D;    /* Muted Vintage Red */
+    --typro-active: #6A3428;
+    --typro-pending: #8B7E62;
+    --typro-border: rgba(106, 52, 40, 0.1);
+    --typro-glow: rgba(106, 52, 40, 0.2);
+    
+    /* LEGACY / NEUMORPHIC COMPATIBILITY */
+    --neumorphic-bg: #CFB882;
+    --neumorphic-text: #6A3428;
 }
 
 @layer base {
@@ -41,15 +48,10 @@
     }
 }
 
+/* Rest of your @keyframes and @layer utilities remain the same */
 @keyframes fade-in {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes spin {
@@ -65,23 +67,11 @@
 }
 
 @layer utilities {
-    .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-
-    .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    .animate-in {
-        animation: fade-in 0.3s ease-out forwards;
-    }
-
-    .animate-spin-slow {
-        animation: spin 0.6s ease-out;
-    }
-
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .animate-in { animation: fade-in 0.3s ease-out forwards; }
+    .animate-spin-slow { animation: spin 0.6s ease-out; }
+    
     .typing-cursor {
         width: 2px;
         height: 1.2em;
@@ -90,26 +80,11 @@
         display: inline-block;
     }
 
-    .rgb-mode-active {
-        animation: rgb-glow 2s ease-in-out infinite;
-    }
-
-    .predictive-glow {
-        box-shadow: 0 0 6px var(--typro-accent-secondary), 0 0 12px var(--typro-glow);
-    }
+    .rgb-mode-active { animation: rgb-glow 2s ease-in-out infinite; }
+    .predictive-glow { box-shadow: 0 0 6px var(--typro-accent-secondary), 0 0 12px var(--typro-glow); }
 }
 
-[data-theme="onyx"] body {
-    background-color: var(--typro-bg);
-    color: var(--typro-text);
-}
-
-[data-theme="cyberpunk"] body {
-    background-color: var(--typro-bg);
-    color: var(--typro-text);
-}
-
-[data-theme="matcha"] body {
-    background-color: var(--typro-bg);
-    color: var(--typro-text);
-}
+/* KEEP YOUR EXISTING THEME DATA BUT SYNC BACKGROUNDS */
+[data-theme="onyx"] body { background-color: var(--typro-bg); color: var(--typro-text); }
+[data-theme="cyberpunk"] body { background-color: var(--typro-bg); color: var(--typro-text); }
+[data-theme="matcha"] body { background-color: var(--typro-bg); color: var(--typro-text); }
