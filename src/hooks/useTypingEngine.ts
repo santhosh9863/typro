@@ -10,16 +10,16 @@ interface UseTypingEngineOptions {
 export default function useTypingEngine(targetText: string, options: UseTypingEngineOptions = {}) {
     const { hardMode = false } = options;
     const [typed, setTyped] = useState<string>('');
-    const [cursorIndex, setCursorIndex] = useState<number>(0);
     const [errors, setErrors] = useState<number>(0);
     const [isFrozen, setIsFrozen] = useState<boolean>(false);
+    const cursorIndexRef = useRef<number>(0);
     const pendingErrorRef = useRef<string | null>(null);
 
     const reset = useCallback(() => {
         setTyped('');
-        setCursorIndex(0);
         setErrors(0);
         setIsFrozen(false);
+        cursorIndexRef.current = 0;
         pendingErrorRef.current = null;
     }, []);
 
@@ -36,8 +36,9 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
             playClickSound();
             triggerHaptic();
 
-            if (cursorIndex < targetText.length) {
-                const isCorrect = char === targetText[cursorIndex];
+            const idx = cursorIndexRef.current;
+            if (idx < targetText.length) {
+                const isCorrect = char === targetText[idx];
 
                 if (!isCorrect) {
                     setErrors((prev) => prev + 1);
@@ -50,10 +51,10 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
                 }
 
                 setTyped((prev) => prev + char);
-                setCursorIndex((prev) => prev + 1);
+                cursorIndexRef.current = idx + 1;
             }
         },
-        [cursorIndex, targetText, hardMode, isFrozen, triggerHaptic]
+        [targetText, hardMode, isFrozen, triggerHaptic]
     );
 
     const handleBackspace = useCallback(() => {
@@ -64,8 +65,11 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
             pendingErrorRef.current = null;
             setIsFrozen(false);
         } else {
-            setTyped((prev) => prev.slice(0, -1));
-            setCursorIndex((prev) => Math.max(0, prev - 1));
+            const idx = cursorIndexRef.current;
+            if (idx > 0) {
+                setTyped((prev) => prev.slice(0, -1));
+                cursorIndexRef.current = idx - 1;
+            }
         }
     }, [hardMode, triggerHaptic]);
 
@@ -88,17 +92,22 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
     );
 
     useEffect(() => {
+        cursorIndexRef.current = 0;
         window.addEventListener('keydown', handleKeyDown);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, [handleKeyDown]);
 
+    useEffect(() => {
+        cursorIndexRef.current = 0;
+    }, [targetText]);
+
     const characterStates: CharacterState[] = targetText.split('').map((expectedChar, index) => {
-        if (index < cursorIndex) {
+        if (index < cursorIndexRef.current) {
             return typed[index] === expectedChar ? 'correct' : 'incorrect';
         }
-        if (index === cursorIndex) {
+        if (index === cursorIndexRef.current) {
             return 'active';
         }
         return 'pending';
@@ -106,7 +115,7 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
 
     return {
         typed,
-        cursorIndex,
+        cursorIndex: cursorIndexRef.current,
         errors,
         characterStates,
         reset,

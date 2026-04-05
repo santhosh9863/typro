@@ -14,6 +14,7 @@ import { useTrainingStats } from '@/hooks/useTrainingStats';
 import { calculateAccuracy, calculateWPM } from '@/lib/utils';
 import { CURRICULUM } from '@/lib/constants';
 import { useTheme } from '@/context/ThemeContext';
+import { unlockAudio } from '@/lib/audio';
 
 interface TypingAreaProps {
     hardMode: boolean;
@@ -28,7 +29,7 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
     const [levelUnlocked, setLevelUnlocked] = useState<boolean>(true);
     const hasShownConfetti = useRef<boolean>(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const lastInputLength = useRef<number>(0);
+    const [inputValue, setInputValue] = useState<string>('');
 
     const { stats, completeLevel, isLevelUnlocked } = useTrainingStats();
 
@@ -37,7 +38,6 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
 
     const {
         typed,
-        cursorIndex,
         errors,
         characterStates,
         reset,
@@ -52,39 +52,12 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
 
     useEffect(() => {
         hasShownConfetti.current = false;
-        lastInputLength.current = 0;
     }, [level, sentenceIdx]);
 
     useEffect(() => {
         const unlocked = isLevelUnlocked(level);
         setLevelUnlocked(unlocked);
     }, [level, isLevelUnlocked]);
-
-    useEffect(() => {
-        if (cursorIndex === 1 && !isTyping) {
-            setIsTyping(true);
-        }
-    }, [cursorIndex, isTyping]);
-
-    useEffect(() => {
-        if (cursorIndex >= targetText.length) {
-            setIsTyping(false);
-        }
-    }, [cursorIndex, targetText.length]);
-
-    useEffect(() => {
-        let interval: NodeJS.Timeout;
-        if (isTyping) {
-            interval = setInterval(() => {
-                setElapsedTime((prev) => prev + 1);
-                const currentWpm = calculateWPM(typed.length, errors, elapsedTime + 1);
-                setWpmSnapshots((prev) => [...prev, currentWpm]);
-            }, 1000);
-        }
-        return () => {
-            if (interval) clearInterval(interval);
-        };
-    }, [isTyping, typed.length, errors, elapsedTime]);
 
     const triggerConfetti = useCallback(() => {
         if (hasShownConfetti.current) return;
@@ -103,7 +76,7 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
         setIsTyping(false);
         setElapsedTime(0);
         setWpmSnapshots([]);
-        lastInputLength.current = 0;
+        setInputValue('');
         if (inputRef.current) {
             inputRef.current.value = '';
         }
@@ -141,30 +114,35 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
     }, [level, sentenceIdx, handleReset]);
 
     const handleContainerClick = useCallback(() => {
+        unlockAudio();
         if (inputRef.current) {
             inputRef.current.focus();
             inputRef.current.value = '';
-            lastInputLength.current = 0;
+            setInputValue('');
         }
     }, []);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const inputValue = e.target.value;
-        const inputLength = inputValue.length;
-
-        if (inputLength > lastInputLength.current) {
-            const newChar = inputValue.slice(-1);
-            handleInput(newChar);
-        } else if (inputLength < lastInputLength.current) {
-            handleBackspace();
+        const value = e.target.value;
+        if (value.length > 0) {
+            const char = value[value.length - 1];
+            handleInput(char);
         }
-
-        lastInputLength.current = inputLength;
-
         if (inputRef.current) {
             inputRef.current.value = '';
         }
-    }, [handleInput, handleBackspace]);
+        setInputValue('');
+    }, [handleInput]);
+
+    const handleInputEvent = useCallback((e: React.FormEvent<HTMLInputElement>) => {
+        const value = e.currentTarget.value;
+        if (value.length > 0) {
+            const char = value[value.length - 1];
+            handleInput(char);
+        }
+        e.currentTarget.value = '';
+        setInputValue('');
+    }, [handleInput]);
 
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Backspace') {
@@ -173,13 +151,39 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
             if (inputRef.current) {
                 inputRef.current.value = '';
             }
-            lastInputLength.current = 0;
+            setInputValue('');
         }
     }, [handleBackspace]);
 
-    const isFinished = cursorIndex >= targetText.length;
+    const isFinished = typed.length >= targetText.length;
     const wpm = calculateWPM(typed.length, errors, elapsedTime);
     const accuracy = calculateAccuracy(typed.length, errors);
+
+    useEffect(() => {
+        if (typed.length === 1 && !isTyping) {
+            setIsTyping(true);
+        }
+    }, [typed.length, isTyping]);
+
+    useEffect(() => {
+        if (typed.length >= targetText.length) {
+            setIsTyping(false);
+        }
+    }, [typed.length, targetText.length]);
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isTyping) {
+            interval = setInterval(() => {
+                setElapsedTime((prev) => prev + 1);
+                const currentWpm = calculateWPM(typed.length, errors, elapsedTime + 1);
+                setWpmSnapshots((prev) => [...prev, currentWpm]);
+            }, 1000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isTyping, typed.length, errors, elapsedTime]);
 
     useEffect(() => {
         if (isFinished && elapsedTime > 0) {
@@ -248,19 +252,21 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
                 <input
                     ref={inputRef}
                     type="text"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    autoCapitalize="off"
-                    className="opacity-0 absolute pointer-events-none w-0 h-0"
-                    aria-hidden="true"
+                    value={inputValue}
                     onChange={handleInputChange}
+                    onInput={handleInputEvent}
                     onKeyDown={handleInputKeyDown}
                     onBlur={() => {
                         setTimeout(() => {
                             inputRef.current?.focus();
                         }, 10);
                     }}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoCapitalize="off"
+                    className="opacity-0 absolute pointer-events-none w-0 h-0"
+                    aria-hidden="true"
                 />
 
                 <div className="flex w-full justify-between items-center mb-10 px-2 sm:px-6 font-bold tracking-widest uppercase text-[10px] sm:text-xs opacity-70">
@@ -289,7 +295,7 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
                 <div className="relative text-xl sm:text-2xl md:text-3xl font-mono leading-relaxed tracking-wide select-none whitespace-pre-wrap break-words w-full text-center mb-12 min-h-[120px] flex flex-wrap justify-center content-center">
                     {targetText.split('').map((char, index) => (
                         <React.Fragment key={`char-${level}-${sentenceIdx}-${index}`}>
-                            {index === cursorIndex && <Cursor />}
+                            {index === typed.length && <Cursor />}
                             <Character
                                 char={char}
                                 state={characterStates[index] || 'pending'}

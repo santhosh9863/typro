@@ -35,6 +35,7 @@ const SWITCH_PROFILES: Record<SwitchProfile, SwitchSound> = {
 };
 
 let currentProfile: SwitchProfile = 'blue';
+let audioContext: AudioContext | null = null;
 
 const STORAGE_KEY = 'typro-switch-profile';
 
@@ -64,12 +65,47 @@ export function getProfileInfo(profile: SwitchProfile): SwitchSound {
     return SWITCH_PROFILES[profile];
 }
 
+function getAudioContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
+
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        } catch {
+            return null;
+        }
+    }
+
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+
+    return audioContext;
+}
+
+export const unlockAudio = (): void => {
+    if (typeof window === 'undefined') return;
+
+    const ctx = getAudioContext();
+    if (ctx) {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.01);
+    }
+};
+
 export const playClickSound = (): void => {
     if (typeof window === 'undefined') return;
 
     try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
         const profile = SWITCH_PROFILES[currentProfile];
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const oscillator = ctx.createOscillator();
         const gainNode = ctx.createGain();
 
