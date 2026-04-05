@@ -46,7 +46,7 @@ export default function Home() {
 
                 {/* 4. BRANDING */}
                 <footer className="opacity-30 text-[10px] uppercase tracking-[0.2em] font-bold mt-4">
-                    Santhosh9900 // Typro v3.0
+                    SANTHOSH // Typro 2.0
                 </footer>
             </Container>
 
