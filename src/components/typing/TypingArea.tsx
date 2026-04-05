@@ -27,6 +27,7 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
     const [wpmSnapshots, setWpmSnapshots] = useState<number[]>([]);
     const [levelUnlocked, setLevelUnlocked] = useState(true);
     const hasShownConfetti = useRef(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const { stats, completeLevel, isLevelUnlocked } = useTrainingStats();
 
@@ -131,6 +132,10 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
         handleReset();
     }, [level, sentenceIdx, handleReset]);
 
+    const handleContainerClick = useCallback(() => {
+        inputRef.current?.focus();
+    }, []);
+
     const isFinished = cursorIndex >= targetText.length;
     const wpm = calculateWPM(typed.length, errors, elapsedTime);
     const accuracy = calculateAccuracy(typed.length, errors);
@@ -185,6 +190,7 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
             </div>
 
             <div
+                onClick={handleContainerClick}
                 className={`
                     w-full p-6 sm:p-10 mb-6
                     flex flex-col items-center justify-center
@@ -194,9 +200,23 @@ export default function TypingArea({ hardMode, onRgbModeChange }: TypingAreaProp
                     ${isFinished ? 'opacity-40 scale-95 blur-[1px]' : 'opacity-100 scale-100'}
                     ${isFrozen ? 'ring-2 ring-red-500 ring-opacity-50' : ''}
                     ${!levelUnlocked ? 'opacity-50 pointer-events-none' : ''}
+                    cursor-text
                 `}
                 style={{ backgroundColor: theme.bgSecondary }}
             >
+                <input
+                    ref={inputRef}
+                    type="text"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className="opacity-0 absolute pointer-events-none w-0 h-0"
+                    aria-hidden="true"
+                    onKeyDown={(e) => {
+                        e.preventDefault();
+                    }}
+                />
+
                 <div className="flex w-full justify-between items-center mb-10 px-2 sm:px-6 font-bold tracking-widest uppercase text-[10px] sm:text-xs opacity-70">
                     <div className="flex items-center gap-2">
                         <span className="text-[var(--typro-text-secondary)]">Sentence</span>
