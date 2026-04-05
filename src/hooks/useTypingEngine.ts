@@ -23,9 +23,9 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
         pendingErrorRef.current = null;
     }, []);
 
-    const triggerHaptic = useCallback(() => {
+    const triggerHaptic = useCallback((duration = 10) => {
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
-            navigator.vibrate(10);
+            navigator.vibrate(duration);
         }
     }, []);
 
@@ -34,7 +34,6 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
             if (hardMode && isFrozen) return;
 
             playClickSound();
-            triggerHaptic();
 
             const idx = cursorIndexRef.current;
             if (idx < targetText.length) {
@@ -42,12 +41,17 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
 
                 if (!isCorrect) {
                     setErrors((prev) => prev + 1);
+                    // Trigger a sharper vibration (50ms) only on errors
+                    triggerHaptic(50);
 
                     if (hardMode) {
                         setIsFrozen(true);
                         pendingErrorRef.current = char;
                         return;
                     }
+                } else {
+                    // Optional: Very light tap for correct keys
+                    triggerHaptic(10);
                 }
 
                 setTyped((prev) => prev + char);
@@ -59,7 +63,7 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
 
     const handleBackspace = useCallback(() => {
         playClickSound();
-        triggerHaptic();
+        triggerHaptic(15); // Light vibration for backspace
 
         if (pendingErrorRef.current && hardMode) {
             pendingErrorRef.current = null;
@@ -92,7 +96,7 @@ export default function useTypingEngine(targetText: string, options: UseTypingEn
     );
 
     useEffect(() => {
-        cursorIndexRef.current = 0;
+        // Remove manual ref reset to 0 here if it causes jumping on re-renders
         window.addEventListener('keydown', handleKeyDown);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
